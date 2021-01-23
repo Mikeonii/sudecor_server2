@@ -13,16 +13,15 @@ class CreateAttendanceTable extends Migration
      */
     public function up()
     {
-        Schema::create('attendance', function (Blueprint $table) {
+        Schema::create('attendances', function (Blueprint $table) {
             $table->id();
             $table->string('client_id');
-            $table->string('time_in');
-            $table->string('time_out');
-            $table->integer('regular_hour');
-            $table->integer('over_time');
-            $table->integer('sunday');
-            $table->integer('holiday');
-            $table->timestamps();
+            $table->datetime('time_in');
+            $table->datetime('time_out');
+            $table->integer('regular_hour')->default(0);
+            $table->integer('over_time')->default(0);
+            $table->integer('sunday')->default(0);
+            $table->integer('holiday')->default(0);
         });
     }
 
