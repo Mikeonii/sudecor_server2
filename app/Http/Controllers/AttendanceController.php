@@ -15,7 +15,7 @@ class AttendanceController extends Controller
 {
     public function insert_attendance(Request $request){
     	$is_in = $request->input('is_in');
-    	$client = Client::findOrFail($request->input('client_id'));
+    	$client = Client::where('card_number',$request->input('card_number'))->firstOrFail();
     	$date_today = Carbon::now()->format('Y-m-d H:i:s');
     	$default_time_out = '2020-01-01 00:00:00';
  		// if is_in create new row
@@ -23,7 +23,7 @@ class AttendanceController extends Controller
  			// check if exist
  			$exist = Attendance::select('time_in')->where('client_id',$client->id)->whereDate('time_in',Carbon::now()->format('Y-m-d'))->exists();
  			if($exist){
- 				return "you are already logged in today";
+ 				return "you already logged in today";
  			}
  			$new = new Attendance;
  			$new->client_id = $client->id;
@@ -41,7 +41,7 @@ class AttendanceController extends Controller
  			// check if exist
  			$exist = Attendance::select('time_in')->where('client_id',$client->id)->whereDate('time_out',Carbon::now()->format('Y-m-d'))->exists();
  			if($exist){
- 				return "you have already logged out today";
+ 				return "you already logged out today";
  			}
  			$date_today = Carbon::parse($date_today);
  			$attendance_row = Attendance::select('time_in','id')->whereDate('time_in',$date_today->toDateString())->where('client_id',$client->id)->first();
@@ -70,7 +70,7 @@ class AttendanceController extends Controller
  			$attendance_row->over_time = $col['over_time'];
  			$attendance_row->sunday = $sun;
  			$attendance_row->holiday = $hol;
-
+ 			
  			if($attendance_row->save()){
  				return $attendance_row;
  			};
@@ -81,6 +81,7 @@ class AttendanceController extends Controller
     }
     // calculate regular hour
     public function get_hour($time_in, $time_out){
+
     	$reg_hour = $time_out->diff($time_in)->format('%h');
     	$complete_hour = 8;
     	// if reg hour exceeds 8 hours, add the remaining to overtime
@@ -97,9 +98,8 @@ class AttendanceController extends Controller
     }
     // calculate sunday
     public function cal_sunday($time_in,$time_out){
-    	if($time_in->dayOfWeekIso == '7'){
+    	if($time_in->dayOfWeekIso == 7){;
     		return $time_out->diff($time_in)->format('%h');
-
     	}
     	else{
     		return '0';
