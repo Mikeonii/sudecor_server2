@@ -39,13 +39,13 @@ class ClientsController extends Controller
 	    		$date_second = $year.'-'.$month.'-'.$day_second;
 
 	    		$attendances = Attendance::whereBetween('time_in',[$date_first,$date_second])
-	    		->where('client_id',$client->id)->get();
+	    		->where('client_id',$client->id)->orderBy('time_in','ASC')->get();
 
 	    		$regular_hour = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('regular_hour');
 	    		$over_time = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('over_time');
 	    		$sunday = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('sunday');
 	    		$holiday = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('holiday');
-
+	    		$query_info = $date_first." to: ".$date_second;
 	    		$totals = Collect([$regular_hour,$over_time,$sunday,$holiday]);
 	    		$client_totals = Collect([$client,$attendances,$totals]);
 	    		array_push($info, $client_totals);
@@ -53,8 +53,8 @@ class ClientsController extends Controller
     		array_push($full_info,$info);
     	}
     	// return $full_info;
-    	// return view('print.print_to_excel',compact('full_info'));
-    	return Excel::download(new AttendanceExport($full_info), 'attendance.xlsx');
+    	// return view('print.print_to_excel',compact('full_info','query_info'));
+    	return Excel::download(new AttendanceExport($full_info,$query_info), 'attendance.xlsx');
     	
     }
 }
