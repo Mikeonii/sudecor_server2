@@ -29,3 +29,5 @@ Route::put('/insert_holiday',[HolidaysController::class,'insert_holiday']);
 Route::post('/insert_client',[ClientsController::class,'insert_client']);
 // update client
 Route::put('/insert_client',[ClientsController::class,'insert_client']);
+// get attendance
+Route::get('/attendance/{year}/{month}/{half}/',[ClientsController::class,'get_client']);
