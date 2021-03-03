@@ -8,14 +8,26 @@ use App\Models\Client;
 use App\Models\Holiday;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use DB;
 
 // 2021-01-23 12:12:11
 
 class AttendanceController extends Controller
 {
+
+    public function attendances(){
+        $attendances = DB::table('clients')->join('attendances',function($join){
+            $join->on('clients.id','=','attendances.client_id');
+        })->get();
+        // $attendances = Attendance::all();
+        return $attendances;
+    }
     public function insert_attendance(Request $request){
     	$is_in = $request->input('is_in');
-    	$client = Client::where('card_number',$request->input('card_number'))->firstOrFail();
+    	$client = Client::where('card_number',$request->input('card_number'))->first();
+        if(!$client){
+            return "0";
+        }
     	$date_today = Carbon::now()->format('Y-m-d H:i:s');
     	$default_time_out = '2020-01-01 00:00:00';
  		// if is_in create new row
@@ -29,8 +41,14 @@ class AttendanceController extends Controller
  			$new->client_id = $client->id;
  			$new->time_in = $date_today;
  			$new->time_out = $default_time_out;
+
  			if($new->save()){
- 				return $client;
+ 				 $result = collect([
+                'name'=>$new->client->name,
+                'time_in'=>$new->time_in,   
+                'time_out'=>'None',
+                ]);
+                return $result;
  			}
  			else{
  				return "error";
@@ -52,7 +70,7 @@ class AttendanceController extends Controller
  				$attendance_row = Attendance::select('time_in','id')->whereDate('time_in',Carbon::yesterday()->toDateString())->where('client_id',$client->id)->whereDate('time_out',$default_time_out)->first();
  				if($attendance_row == null){
  					// tell the user to check whether he is trying to log in or out
- 					return "ask for confirmation";
+ 					return "Are you trying to log in?";
  				}
  			}
  	
@@ -72,12 +90,16 @@ class AttendanceController extends Controller
  			$attendance_row->holiday = $hol;
  			
  			if($attendance_row->save()){
- 				return $attendance_row;
+                $result = collect([
+                'name'=>$attendance_row->client->name,
+                'time_in'=>$attendance_row->time_in,
+                'time_out'=>$attendance_row->time_out,
+                ]);
+                return $result;
  			};
 
  		}
     	
-
     }
     // calculate regular hour
     public function get_hour($time_in, $time_out){

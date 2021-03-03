@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\HolidaysController;
 use App\Http\Controllers\ClientsController;
+// use App\Htpp\Controllers\AttendanceSummaryController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -21,6 +22,8 @@ use App\Http\Controllers\ClientsController;
 // });
 // insert attendance
 Route::post('/insert_attendance',[AttendanceController::class,'insert_attendance']);
+// update attendance
+Route::put('/insert_attendance',[AttendanceController::class,'insert_attendance']);
 // insert holiday
 Route::post('/insert_holiday',[HolidaysController::class,'insert_holiday']);
 // update holiday
@@ -30,4 +33,13 @@ Route::post('/insert_client',[ClientsController::class,'insert_client']);
 // update client
 Route::put('/insert_client',[ClientsController::class,'insert_client']);
 // get attendance
-Route::get('/attendance/{year}/{month}/{half}/',[ClientsController::class,'get_client']);
+Route::get('/attendance/{year}/{month}/{half}',[ClientsController::class,'get_client']);
+// get all clients
+Route::get('/clients',[ClientsController::class,'clients']);
+// get all attendance
+Route::get('/attendances', [AttendanceController::class,'attendances']);
+// get client
+Route::get('/client/{id}',[ClientsController::class,'get_single_client']);
+Route::get('/attendance/{id}',[ClientsController::class,'get_attendance_from_client']);
+// calculate summary
+// Route::post('/summary',[AttendanceSummaryController::class,'calculate_summary']);

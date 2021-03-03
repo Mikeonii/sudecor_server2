@@ -10,20 +10,36 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ClientsController extends Controller
 {
+	public function get_attendance_from_client($id){
+		$attendance = Attendance::where('client_id', $id)->get();
+		return $attendance;
+	}
+	public function get_single_client($id){
+		$client = Client::where('id',$id)->get();
+		return $client;
+	}
+	public function clients(){
+		$clients = Client::all();
+		return $clients;
+	}
+
     public function insert_client(Request $request){
     	
-		$client = $request->isMethod('put') ? Client::where('card_number',$request->input('card_number'))->firstOrFail() : new Client;
+		$client = $request->isMethod('put') ? Client::where('id',$request->input('id'))->firstOrFail() : new Client;
 
 		$client->name = $request->input('name');
 		$client->card_number =  $request->input('card_number');
+		// $client->department = $request->input('department');
+
 		if($client->save()){
 			return "saved successfuly!";
 			}
 		else{
 			return "something went wrong";
-		}
-    		
+		}	
     }
+
+
     public function get_client($year,$month,$half){
     	// get clients 
     	$clients = Client::get();
