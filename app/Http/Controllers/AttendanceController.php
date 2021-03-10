@@ -79,8 +79,10 @@ class AttendanceController extends Controller
  			$col = $this->get_hour($time_in,$date_today);
  			$sun = $this->cal_sunday($time_in,$date_today);
  			$hol = $this->cal_holiday($time_in,$date_today);
+            $np = $this->cal_night_premium($time_in,$date_today);
 
- 			// insert to row
+            // return $np;
+ 			// // insert to row
  			$attendance_row = Attendance::findOrFail($attendance_row->id);
  			$attendance_row->time_out = $date_today->format('Y-m-d H:i:s');
 
@@ -88,8 +90,10 @@ class AttendanceController extends Controller
  			$attendance_row->over_time = $col['over_time'];
  			$attendance_row->sunday = $sun;
  			$attendance_row->holiday = $hol;
+            $attendance_row->night_premium = $np;
  			
  			if($attendance_row->save()){
+                // return $np;
                 $result = collect([
                 'name'=>$attendance_row->client->name,
                 'time_in'=>$attendance_row->time_in,
@@ -97,6 +101,7 @@ class AttendanceController extends Controller
                 ]);
                 return $result;
  			};
+
 
  		}
     	
@@ -106,8 +111,9 @@ class AttendanceController extends Controller
 
     	$reg_hour = $time_out->diff($time_in)->format('%h');
     	$complete_hour = 8;
-    	// if reg hour exceeds 8 hours, add the remaining to overtime
+    	// if reg hour exceeds 8 hours, set reg hour to 8 and add the remaining to overtime
     	if($reg_hour > $complete_hour){
+            $reg_hour = $complete_hour;
     		$over_time = $reg_hour-$complete_hour;
     	}
     	else{
@@ -138,5 +144,14 @@ class AttendanceController extends Controller
     		return 0;
     	}
 
+    }
+    // calculate night premium
+    public function cal_night_premium($time_in,$time_out){
+        if($time_in->format('H') >= 23 ){
+            // start counting for NP
+            return $time_out->diff($time_in)->format('%h');
+            // echo $time_out->diff($time_in)->format('%h');
+        }
+       
     }
 }
