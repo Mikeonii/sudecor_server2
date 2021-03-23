@@ -49,8 +49,8 @@ class ClientsController extends Controller
 	    		// first half
     		$info = array();
 	    	if($half == '1'){
-	    		$day_first = 1;
-	    		$day_second = 26;
+	    		$day_first = 11;
+	    		$day_second = 25;
 	    		$date_first = $year.'-'.$month.'-'.$day_first;
 	    		$date_second = $year.'-'.$month.'-'.$day_second;
 
@@ -63,6 +63,25 @@ class ClientsController extends Controller
 	    		$holiday = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('holiday');
 	    		$query_info = $date_first." to: ".$date_second;
 	    		$totals = Collect([$regular_hour,$over_time,$sunday,$holiday]);
+	    		$client_totals = Collect([$client,$attendances,$totals]);
+	    		array_push($info, $client_totals);
+	    	}
+	    	else{
+	    		$day_first = 26;
+	    		$day_second = 10;
+	    		$date_first = $year.'-'.$month.'-'.$day_first;
+	    		$date_second = $year.'-'.($month+1).'-'.$day_second;
+
+	    		$attendances = Attendance::whereBetween('time_in',[$date_first,$date_second])
+	    		->where('client_id',$client->id)->orderBy('time_in','ASC')->get();
+
+	    		$regular_hour = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('regular_hour');
+	    		$over_time = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('over_time');
+	    		$sunday = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('sunday');
+	    		$holiday = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('holiday');
+	    		$night_premium = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('night_premium');
+	    		$query_info = $date_first." to: ".$date_second;
+	    		$totals = Collect([$regular_hour,$over_time,$sunday,$holiday,$night_premium]);
 	    		$client_totals = Collect([$client,$attendances,$totals]);
 	    		array_push($info, $client_totals);
 	    	}

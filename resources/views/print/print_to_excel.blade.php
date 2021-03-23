@@ -15,6 +15,7 @@
 					<th>Over Time</th>
 					<th>Sunday</th>
 					<th>Holiday</th>
+					<th>Night Premium</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -26,6 +27,7 @@
 						<td>{{$info->over_time}}</td>
 						<td>{{$info->sunday}}</td>
 						<td>{{$info->holiday}}</td>
+						<td>{{$info->night_premium}}</td>
 					</tr>
 				@endforeach
 			</tbody>
@@ -36,6 +38,7 @@
 		<h4>Over Time: {{$individual_info[0][2][1]}}</h4>
 		<h4>Sunday: {{$individual_info[0][2][2]}}</h4>
 		<h4>Holiday: {{$individual_info[0][2][3]}}</h4>
+		<h4>Night Premium: {{$individual_info[0][2][4]}}</h4>
 		<br>
 		<br>
 	@endforeach

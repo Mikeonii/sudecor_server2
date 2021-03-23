@@ -24,10 +24,6 @@ use App\Http\Controllers\ClientsController;
 Route::post('/insert_attendance',[AttendanceController::class,'insert_attendance']);
 // update attendance
 Route::put('/insert_attendance',[AttendanceController::class,'insert_attendance']);
-// insert holiday
-Route::post('/insert_holiday',[HolidaysController::class,'insert_holiday']);
-// update holiday
-Route::put('/insert_holiday',[HolidaysController::class,'insert_holiday']);
 // insert client
 Route::post('/insert_client',[ClientsController::class,'insert_client']);
 // update client
@@ -43,3 +39,11 @@ Route::get('/client/{id}',[ClientsController::class,'get_single_client']);
 Route::get('/attendance/{id}',[ClientsController::class,'get_attendance_from_client']);
 // calculate summary
 // Route::post('/summary',[AttendanceSummaryController::class,'calculate_summary']);
+
+// HOLIDAYS
+// get holidays
+Route::get('/holidays',[HolidaysController::class,'index']);
+// insert holiday
+Route::post('/add_holiday',[HolidaysController::class,'add_holiday']);
+// update holiday
+Route::put('/edit_holiday',[HolidaysController::class,'add_holiday']);
