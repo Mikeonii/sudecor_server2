@@ -61,8 +61,9 @@ class ClientsController extends Controller
 	    		$over_time = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('over_time');
 	    		$sunday = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('sunday');
 	    		$holiday = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('holiday');
+	    		$night_premium = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('night_premium');
 	    		$query_info = $date_first." to: ".$date_second;
-	    		$totals = Collect([$regular_hour,$over_time,$sunday,$holiday]);
+	    		$totals = Collect([$regular_hour,$over_time,$sunday,$holiday,$night_premium]);
 	    		$client_totals = Collect([$client,$attendances,$totals]);
 	    		array_push($info, $client_totals);
 	    	}
@@ -83,8 +84,10 @@ class ClientsController extends Controller
 	    		$query_info = $date_first." to: ".$date_second;
 	    		$totals = Collect([$regular_hour,$over_time,$sunday,$holiday,$night_premium]);
 	    		$client_totals = Collect([$client,$attendances,$totals]);
+
 	    		array_push($info, $client_totals);
 	    	}
+	    	
     		array_push($full_info,$info);
     	}
     	// return $full_info;
