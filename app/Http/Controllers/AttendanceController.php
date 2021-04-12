@@ -54,10 +54,17 @@ class AttendanceController extends Controller
  				return "error";
  			};
  		}
+
  		// find and insert time out
  		else{
+
  			// check if exist
- 			$exist = Attendance::select('time_in')->where('client_id',$client->id)->whereDate('time_out',Carbon::now()->format('Y-m-d'))->exists();
+ 			$exist = Attendance::
+            where('client_id',$client->id)
+            ->whereDate('time_out','<=',Carbon::now()->format('Y-m-d H:i:s'))
+            ->whereDate('time_out','>',Carbon::now()->subHours(1)->format('Y-m-d H:i:s'))
+            ->exists();
+    
  			if($exist){
  				return "you already logged out today";
  			}
@@ -80,32 +87,55 @@ class AttendanceController extends Controller
  			$sun = $this->cal_sunday($time_in,$date_today);
  			$hol = $this->cal_holiday($time_in,$date_today);
             $np = $this->cal_night_premium($time_in,$date_today);
+           
+            $over_time = null;
+            $regular_hour = null;
 
-            // return $np;
- 			// // insert to row
- 			$attendance_row = Attendance::findOrFail($attendance_row->id);
- 			$attendance_row->time_out = $date_today->format('Y-m-d H:i:s');
+            // if today is holiday or sunday, insert 0 to regular hour
+            if($sun['sun_hour'] > 0 || $hol['hol_hour'] > 0){
+                $regular_hour = 0;
+                // get overtime
+                if($sun['over_time'] > 0){
+                    $over_time = $sun['over_time'];
+                }
+                elseif($hol['over_time'] > 0){
+                    $over_time = $hol['over_time'];
+                }
+                else{
+                    $over_time = 0;
+                }
+            }
+            else{
+                $regular_hour = $col['reg_hour'];
+                $over_time = $col['over_time'];
+            }
 
- 			$attendance_row->regular_hour = $col['reg_hour'];
- 			$attendance_row->over_time = $col['over_time'];
- 			$attendance_row->sunday = $sun;
- 			$attendance_row->holiday = $hol;
+            // // insert to row
+            $attendance_row = Attendance::findOrFail($attendance_row->id);
+            $attendance_row->time_out = $date_today->format('Y-m-d H:i:s');
+
+            $attendance_row->regular_hour = $regular_hour;
+ 			$attendance_row->over_time = $over_time;
+ 			$attendance_row->sunday = $sun['sun_hour'];
+ 			$attendance_row->holiday = $hol['hol_hour'];
             $attendance_row->night_premium = $np;
  			
- 			if($attendance_row->save()){
-                // return $np;
+            try{
+                $attendance_row->save();
                 $result = collect([
                 'name'=>$attendance_row->client->name,
                 'time_in'=>$attendance_row->time_in,
                 'time_out'=>$attendance_row->time_out,
                 ]);
                 return $result;
- 			};
-
-
- 		}
-    	
+            }
+            catch(Exception $e){
+                return  $e->getMessage();
+            }
+ 			
+ 		 }
     }
+
     // calculate regular hour
     public function get_hour($time_in, $time_out){
 
@@ -113,8 +143,8 @@ class AttendanceController extends Controller
     	$complete_hour = 8;
     	// if reg hour exceeds 8 hours, set reg hour to 8 and add the remaining to overtime
     	if($reg_hour > $complete_hour){
+            $over_time = $reg_hour-$complete_hour;
             $reg_hour = $complete_hour;
-    		$over_time = $reg_hour-$complete_hour;
     	}
     	else{
     		$over_time = 0;
@@ -122,36 +152,58 @@ class AttendanceController extends Controller
     	// return an array of 2
     	$col = collect(['reg_hour'=>$reg_hour,'over_time'=>$over_time]);
     	return $col;
-
-    }
-    // calculate sunday
-    public function cal_sunday($time_in,$time_out){
-    	if($time_in->dayOfWeekIso == 7){;
-    		return $time_out->diff($time_in)->format('%h');
-    	}
-    	else{
-    		return '0';
-    	}
     }
     // calculate holiday
     public function cal_holiday($time_in,$time_out){
     	// check if today is holiday
     	if($check = Holiday::select('id')->whereMonth('date',$time_in->month)->whereDay('date',$time_in->day)->exists())
     	{
-    		return $time_out->diff($time_in)->format('%h');
-    	}
-    	else{
-    		return 0;
-    	}
+    		$complete_hour = 8;
+            $hol_hour = $time_out->diff($time_in)->format('%h');
 
+            if($hol_hour > $complete_hour){
+                $over_time = $hol_hour-$complete_hour;
+                $hol_hour = $complete_hour;
+            }
+            else{
+                $over_time = 0;
+            }
+            $col = collect(['hol_hour'=>$hol_hour,'over_time'=>$over_time]);
+    	}
+        else{
+            $col = collect(['hol_hour'=>'0','over_time'=>'0']);
+        }
+        return $col;
+    }
+    // calculate sunday
+    public function cal_sunday($time_in,$time_out){
+        if($time_in->dayOfWeekIso == 7){
+            $complete_hour = 8;
+            $sun_hour = $time_out->diff($time_in)->format('%h');
+
+            if($sun_hour > $complete_hour){
+                $over_time = $sun_hour-$complete_hour;
+                $sun_hour = $complete_hour;
+            }
+            else{
+                $over_time = 0;
+            }
+            $col = collect(['sun_hour'=>$sun_hour,'over_time'=>$over_time]);
+        }
+        else{
+            $col = collect(['sun_hour'=>'0','over_time'=>'0']);
+        }
+         return $col;
     }
     // calculate night premium
     public function cal_night_premium($time_in,$time_out){
-        if($time_in->format('H') >= 23 ){
+
             // start counting for NP
-            return $time_out->diff($time_in)->format('%h');
+            // return $time_out->diff($time_in)->format('%h:%i:%s');
+            $time_in = $time_in->format('Y-m-d')." 23:00:00";
+
+            return $time_out->diff($time_in)->format('%h:%i');
             // echo $time_out->diff($time_in)->format('%h');
-        }
-       
+        
     }
 }
