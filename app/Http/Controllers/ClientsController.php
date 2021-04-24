@@ -62,10 +62,13 @@ class ClientsController extends Controller
 	    		$sunday = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('sunday');
 	    		$holiday = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('holiday');
 	    		$night_premium = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('night_premium');
+	    		$cola = Attendance::whereBetween('time_in',[$date_first,$date_second])
+	    		->where('client_id',$client->id)->orderBy('time_in','ASC')->count();
 	    		$query_info = $date_first." to: ".$date_second;
-	    		$totals = Collect([$regular_hour,$over_time,$sunday,$holiday,$night_premium]);
+	    		$totals = Collect([$regular_hour,$over_time,$sunday,$holiday,$night_premium,$cola]);
 	    		$client_totals = Collect([$client,$attendances,$totals]);
 	    		array_push($info, $client_totals);
+	    	
 	    	}
 	    	else{
 	    		$day_first = 26;
@@ -81,8 +84,10 @@ class ClientsController extends Controller
 	    		$sunday = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('sunday');
 	    		$holiday = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('holiday');
 	    		$night_premium = Attendance::whereBetween('time_in',[$date_first,$date_second])->where('client_id',$client->id)->sum('night_premium');
+	    		$cola = Attendance::whereBetween('time_in',[$date_first,$date_second])
+	    		->where('client_id',$client->id)->orderBy('time_in','ASC')->count();
 	    		$query_info = $date_first." to: ".$date_second;
-	    		$totals = Collect([$regular_hour,$over_time,$sunday,$holiday,$night_premium]);
+	    		$totals = Collect([$regular_hour,$over_time,$sunday,$holiday,$night_premium,$cola]);
 	    		$client_totals = Collect([$client,$attendances,$totals]);
 
 	    		array_push($info, $client_totals);
@@ -91,8 +96,9 @@ class ClientsController extends Controller
     		array_push($full_info,$info);
     	}
     	// return $full_info;
-    	// return view('print.print_to_excel',compact('full_info','query_info'));
-    	return Excel::download(new AttendanceExport($full_info,$query_info), 'attendance.xlsx');
+    	// return $cola;
+    	return view('print.print_to_excel',compact('full_info','query_info'));
+    	// return Excel::download(new AttendanceExport($full_info,$query_info), 'attendance.xlsx');
     	
     }
 }

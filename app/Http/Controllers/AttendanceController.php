@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -57,17 +56,19 @@ class AttendanceController extends Controller
 
  		// find and insert time out
  		else{
-
+            // return Carbon::now()->format('Y-m-d H:i:s')." minus 1 hour: ".Carbon::now()->subHours(1)->format('Y-m-d H:i:s');
  			// check if exist
- 			$exist = Attendance::
-            where('client_id',$client->id)
-            ->whereDate('time_out','<=',Carbon::now()->format('Y-m-d H:i:s'))
-            ->whereDate('time_out','>',Carbon::now()->subHours(1)->format('Y-m-d H:i:s'))
+            $minus_one_hour = Carbon::now()->subHours(1)->format('Y-m-d H:i:s');
+            $time_now = Carbon::now()->format('Y-m-d H:i:s');
+            
+ 			$exist = Attendance::where('client_id',$client->id)
+            ->whereBetween('time_out',[$minus_one_hour,$time_now])
             ->exists();
     
  			if($exist){
  				return "you already logged out today";
  			}
+
  			$date_today = Carbon::parse($date_today);
  			$attendance_row = Attendance::select('time_in','id')->whereDate('time_in',$date_today->toDateString())->where('client_id',$client->id)->first();
 
@@ -87,9 +88,10 @@ class AttendanceController extends Controller
  			$sun = $this->cal_sunday($time_in,$date_today);
  			$hol = $this->cal_holiday($time_in,$date_today);
             $np = $this->cal_night_premium($time_in,$date_today);
-           
             $over_time = null;
             $regular_hour = null;
+            $sunday_total = null;
+            $holiday_total = null;
 
             // if today is holiday or sunday, insert 0 to regular hour
             if($sun['sun_hour'] > 0 || $hol['hol_hour'] > 0){
@@ -110,15 +112,32 @@ class AttendanceController extends Controller
                 $over_time = $col['over_time'];
             }
 
+
             // // insert to row
             $attendance_row = Attendance::findOrFail($attendance_row->id);
             $attendance_row->time_out = $date_today->format('Y-m-d H:i:s');
-
             $attendance_row->regular_hour = $regular_hour;
  			$attendance_row->over_time = $over_time;
- 			$attendance_row->sunday = $sun['sun_hour'];
- 			$attendance_row->holiday = $hol['hol_hour'];
             $attendance_row->night_premium = $np;
+
+             // if today is a special holiday
+            $holiday = Holiday::whereMonth('date',$time_in->month)
+            ->whereDay('date',$time_in->day)
+            ->first();
+            
+            if($holiday){
+                if($holiday->type == 'Special'){
+                    // send hour to sunday
+                    $attendance_row->sunday = $hol['hol_hour'];
+                }
+                elseif($holiday->type =='Regular'){
+                    // send hour to holiday
+                     $attendance_row->holiday = $hol['hol_hour'];
+                }
+            }
+            else{
+                $attendance_row->sunday = $sun['sun_hour'];
+            }
  			
             try{
                 $attendance_row->save();
@@ -132,10 +151,8 @@ class AttendanceController extends Controller
             catch(Exception $e){
                 return  $e->getMessage();
             }
- 			
  		 }
     }
-
     // calculate regular hour
     public function get_hour($time_in, $time_out){
 
@@ -197,13 +214,22 @@ class AttendanceController extends Controller
     }
     // calculate night premium
     public function cal_night_premium($time_in,$time_out){
-
-            // start counting for NP
-            // return $time_out->diff($time_in)->format('%h:%i:%s');
-            $time_in = $time_in->format('Y-m-d')." 23:00:00";
-
-            return $time_out->diff($time_in)->format('%h:%i');
-            // echo $time_out->diff($time_in)->format('%h');
-        
+            
+            // $time_in = $time_in->format('Y-m-d')." 22:00:00";
+            // check if time out is greater than 5 am
+            // if night shift
+        if($time_in->format('H') >= 17) {
+            if($time_out->format('H') >= 5 && $time_out->format('%h') <= 17){
+                return 7;
+            }
+            else{
+                $time_in = $time_in->format('Y-m-d')." 22:00:00";
+                return $time_out->diff($time_in)->format('H');
+            }
+        }
+        else{
+            return 0;
+        }   
+            // echo $time_out->diff($time_in)->format('%h'); 
     }
 }

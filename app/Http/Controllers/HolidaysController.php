@@ -11,6 +11,7 @@ class HolidaysController extends Controller
     	$holiday = $request->isMethod('put') ? Holiday::where('id',$request->input('id'))->firstOrFail() : new Holiday;
     	$holiday->holiday_name = $request->input('holiday_name');
     	$holiday->date = $request->input('date');
+        $holiday->type = $request->input('type');
         try{
             $holiday->save();
             return $holiday;
