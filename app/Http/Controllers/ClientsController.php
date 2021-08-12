@@ -97,8 +97,8 @@ class ClientsController extends Controller
     	}
     	// return $full_info;
     	// return $cola;
-    	return view('print.print_to_excel',compact('full_info','query_info'));
-    	// return Excel::download(new AttendanceExport($full_info,$query_info), 'attendance.xlsx');
+    	// return view('print.print_to_excel',compact('full_info','query_info'));
+    	return Excel::download(new AttendanceExport($full_info,$query_info), 'attendance.xlsx');
     	
     }
 }
